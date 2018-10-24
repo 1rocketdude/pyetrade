@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-'''Market - ETrade Market API
+'''Market - ETrade Market API V1
+
    TODO:
     * Look Up Product
     * Get Quote - Doc String'''
@@ -106,7 +107,7 @@ class ETradeMarket(object):
            
             param: dev
             type: boolean
-            description: use the development environment (True) or production (False)
+            description: use the sandbox environment (True) or live (False)
             
         '''
         self.client_key = client_key
@@ -114,7 +115,8 @@ class ETradeMarket(object):
         self.resource_owner_key = resource_owner_key
         self.resource_owner_secret = resource_owner_secret
         self.dev_environment = dev
-        self.base_url = (r'https://etwssandbox.etrade.com' if dev else r'https://etws.etrade.com')
+        suffix = ('apisb' if dev else 'api')
+        self.base_url = r'https://%s.etrade.com/v1/market' % suffix
         self.session = OAuth1Session(self.client_key,
                                      self.client_secret,
                                      self.resource_owner_key,
@@ -178,7 +180,7 @@ class ETradeMarket(object):
         else:
             return req.text
 
-    def get_quote(self, args, resp_format='json', detail_flag='ALL'):
+    def get_quote(self, args, resp_format=None, detail_flag='ALL'):
         ''' get_quote(resp_format, detail_flag, **kwargs)
         
             Get quote data on all symbols provided in the list args.
@@ -187,7 +189,7 @@ class ETradeMarket(object):
         
             param: resp_format
             type: str
-            description: Response format JSON or None = XML
+            description: Response format JSON text, XML test, or None for python object
            
             param: detailFlag
             type: enum
@@ -201,7 +203,7 @@ class ETradeMarket(object):
                     * INTRADAY - Performance for the current of most
                         recent trading day
                     * OPTIONS - Information on a given option offering
-                    * WEEK52 - 52-week high and low (highest high and
+                    * WEEK_52 - 52-week high and low (highest high and
                         lowest low
                     * ALL (default) - All of the above information and
                         more
@@ -238,14 +240,13 @@ class ETradeMarket(object):
                 
             '''
             
-        assert resp_format in ('json','xml')
+        assert resp_format in ('json','xml',None)
         assert isinstance(args,list)
         if len(args) > 25: LOGGER.warning('get_quote asked for %d requests; only first 25 returned' % len(args))
         
         args_str = ','.join(args[:25])       # ensure that a max of 25 symbols are sent
-        uri = (r'market/sandbox/rest/quote/' if self.dev_environment else r'market/rest/quote/')
-        api_url = '%s/%s%s' % (self.base_url, uri, args_str)
-        if resp_format == 'json': api_url += '.json'
+        api_url = '%s/quote/%s' % (self.base_url, args_str)
+        if resp_format in ('json',None): api_url += '.json'
         
         LOGGER.debug(api_url)
         payload = {'detailFlag': detail_flag}
@@ -253,7 +254,7 @@ class ETradeMarket(object):
         req.raise_for_status()
         LOGGER.debug(req.text)
 
-        if resp_format == 'json':
+        if resp_format is None:
             return req.json()
         else:
             return req.text
@@ -413,10 +414,7 @@ class ETradeMarket(object):
     def get_option_expire_date(self, underlier, resp_format=None):
         ''' get_option_expiry_dates(underlier, resp_format, **kwargs)
         
-            Return a sorted list of datetime.date objects for the underlier. Some of the returned dates may not actually
-            have any options.
-            
-            if resp_format is 'json', return the python object <== this currently doesn't work as described by the eTrade API
+            Return a sorted list of datetime.date objects for the underlier.
             
             Another problem is the etrade API only returns monthlies, not weeklies. Therefore, invent some weeklies which occur on Fridays
             for the present month and one month out, generally. These may not exist, but there is no way to know without asking
@@ -428,31 +426,30 @@ class ETradeMarket(object):
            
             param: resp_format
             type: str
-            description: Response format .JSON or None = XML
+            description: Response format .JSON, XML, or None (python object)
            
             Sample Request
-            GET https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL
-            or  https://etws.etrade.com/market/rest/optionexpiredate?underlier=GOOGL.json  <== doesn't seem to work
+            GET https://etws.etrade.com/market/rest/optionexpiredate?symbol=GOOGL
+            or  https://etws.etrade.com/market/rest/optionexpiredate?symbol=GOOGL.json
             
         '''
 
         assert resp_format in (None,'json','xml')
-        args_str = 'underlier=%s' % underlier
-        uri = (r'market/sandbox/rest/optionexpiredate' if self.dev_environment else r'market/rest/optionexpiredate')
-        api_url = '%s/%s?%s' % (self.base_url, uri, args_str)
+        api_url = '%s/optionexpiredate?symbol=%s' % (self.base_url, underlier)
+        if resp_format in ('json',None): api_url += '.json'
         LOGGER.debug(api_url)
         
-        if resp_format == 'json':
-            req = self.session.get(api_url + '.json')
-        else:
-            req = self.session.get(api_url)
+        req = self.session.get(api_url)
         req.raise_for_status()
         LOGGER.debug(req.text)
 
 # JSON format a lot easier to deal with, but doesn't seem to work
-        if resp_format == 'json':
+        if resp_format is None:
             return req.json()
         else:
+            return req.text
+        
+'''      old code because JSON return didn't work     . hopefully V1 code works 
             try:
                 xmlobj = jxmlease.parse(req.text)
                 z = xmlobj['OptionExpireDateGetResponse']['ExpirationDate']
@@ -460,7 +457,6 @@ class ETradeMarket(object):
             except Exception as err:
                 LOGGER.error(err)
                 raise
-
 # add weeklies for this month and the following month
         friday = NEXT_FRIDAY
         for i in range(8):
@@ -468,4 +464,5 @@ class ETradeMarket(object):
             friday += dt.timedelta(days=7)
         
         return sorted(dates)
+'''
     
