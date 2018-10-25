@@ -13,26 +13,28 @@ LOGGER = logging.getLogger(__name__)
 
 class ETradeOAuth(object):
     '''ETradeOAuth
-       ETrade OAuth 1.0a Wrapper'''
+       ETrade OAuth 1.0a Wrapper
+       updated for E-trade API V1
+    '''
     def __init__(self, consumer_key, consumer_secret, callback_url='oob'):
         '''__init__(consumer_key, consumer_secret, callback_url)
            param: consumer_key
            type: str
            description: etrade oauth consumer key
+           
            param: consumer_secret
            type: str
            description: etrade oauth consumer secret
+           
            param: callback_url
            type: str
            description: etrade oauth callback url default oob'''
 
         self.consumer_key = consumer_key
         self.consumer_secret = consumer_secret
-        self.base_url_prod = r'https://etws.etrade.com'
-        self.base_url_dev = r'https://etwssandbox.etrade.com'
-        self.req_token_url = r'https://etws.etrade.com/oauth/request_token'
-        self.auth_token_url = r'https://us.etrade.com/e/t/etws/authorize'
-        self.access_token_url = r'https://etws.etrade.com/oauth/access_token'
+        self.req_token_url = r'https://api.etrade.com/oauth/request_token'
+        self.auth_token_url = r'https://api.etrade.com/oauth/authorize'
+        self.access_token_url = r'https://api.etrade.com/oauth/access_token'
         self.callback_url = callback_url
         self.access_token = None
         self.resource_owner_key = None
@@ -45,31 +47,38 @@ class ETradeOAuth(object):
            type: str
            description: the value used by the consumer to identify
                         itself to the service provider.
+                        
            param: oauth_timestamp
            type: int
            description: the date and time of the request, in epoch time.
                         must be accurate within five minutes.
+                        
            param: oauth_nonce
            type: str
            description: a nonce, as discribed in the authorization guide
                         roughly, an arbitrary or random value that cannot
                         be used again with the same timestamp.
+                        
            param: oauth_signature_method
            type: str
            description: the signature method used by the consumer to sign
                         the request. the only supported value is 'HMAC-SHA1'.
+                        
            param: oauth_signature
            type: str
            description: signature generated with the shared secret and token
                         secret using the specified oauth_signature_method
                         as described in OAuth documentation.
+                        
            param: oauth_callback
            type: str
            description: callback information, as described elsewhere. must
                         always be set to 'oob' whether using a callback or
                         not
+                        
            rtype: str
-           description: Etrade autherization url'''
+           description: Etrade autherization url
+        '''
 
         # Set up session
         self.session = OAuth1Session(self.consumer_key,
