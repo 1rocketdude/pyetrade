@@ -7,8 +7,13 @@ Python E-Trade API Wrapper
 [![Build Status](https://travis-ci.org/jessecooper/pyetrade.svg?branch=master)](https://travis-ci.org/jessecooper/pyetrade)
 [![codecov](https://codecov.io/gh/jessecooper/pyetrade/branch/master/graph/badge.svg)](https://codecov.io/gh/jessecooper/pyetrade)
 ## Completed
+v1 API  
 Authorization API - ALL  
-Accounts API - ALL  
+Accounts  
+* list accounts
+  
+NOTICE: v0 API - Will be sunset by etrade on 12/31/2018 an effert is underway to move pyetrade over to v1  
+Authorization API - ALL  
 Order API - 
 * List Orders
 * Place Equity Order 
@@ -20,10 +25,8 @@ Market API -
 * Get Quote  
 
 ## TODO
-Order API - See pyetrade/order.py  
-Market API - See pyetrade/market.py  
-Notification API - ALL  
-Limits API - ALL  
+* All of v1 API
+* Migrate test suit to pytest
 
 ## Install
 ```
@@ -40,12 +43,12 @@ import pyetrade
 oauth = pyetrade.ETradeOAuth(consumer_key, consumer_secret)
 oauth.get_request_token()
 #Follow url and get verification code
-tokens = oauth.get_access_token(verifier_code)
+oauth.get_access_token(verifier_code)
 accounts = pyetrade.ETradeAccounts(
         consumer_key,
         consumer_secret, 
-        tokens['oauth_token'],
-        tokens['oauth_token_secret']
+        oauth['oauth_token'],
+        oauth['oauth_token_secret']
     )
 accounts.list_accounts()
 ```
@@ -61,7 +64,8 @@ accounts.list_accounts()
 ```
 * Lint  
 ```
-make lint #Lint score should be >=8
+# Run Linter
+pylint pyetrade/  #Lint score should be >=8
 ```
 * Test  
 ```

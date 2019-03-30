@@ -1,3 +1,5 @@
+pre-commit
 pylint
-coverage
+flake8
 Sphinx
+xmltodict
